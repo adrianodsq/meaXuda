@@ -1,0 +1,223 @@
+<html>
+    <head>
+        <title>Me aXuda - V2.6.1</title><!--V[n semana].[dia].[n iteracao do dia]-->
+        <link rel="stylesheet" type="text/css" href="style/style.css" />
+        <link rel="stylesheet" href="highlight/styles/default.css">
+    </head>
+    <body>
+        <script src="highlight/highlight.pack.js"></script> 
+        <script>hljs.initHighlightingOnLoad();</script>
+       
+        <!--Menu informacoes do status do servidor-->
+        <div id="informacao">
+            <span id="statusServer">Offline</span>
+        </div>
+        
+        <h2><span style="color: red">M</span>e a<span style="color: red">X</span>uda</h2>
+        <h3>Servidor teste para o projeto de Sistemas Distribu&iacutedos</h3>
+        
+        <!--Area de codigo-->
+        <div id = "codeArea">    
+            <pre>C&oacutedigo:<code id = "code"></code></pre>
+            <pre>Erros:<code id = "error"></code></pre>
+        </div>
+        
+        <!--Area do menu de arquivos-->
+        <div id="menuFile">
+            <input id="c-file" type="file" onchange="javascript: checkExtC();"/></br>
+            <button onclick="javascript: readSingleFile();">Enviar Arquivo</button></br>
+        </div>
+        
+        <!--<div id="chat">
+            <textarea id="inputChat" rows="4" cols="50"></textarea>
+            <button onclick="javascript: enviaChat();">Enviar</button>
+        </div>-->
+        
+        <script type="text/javascript">
+            //Converte o conteudo do arquivo em string
+            function readSingleFile()
+            {
+                //Retrieve the first (and only!) File from the FileList object
+                var f = document.getElementById('c-file').files[0];
+             
+                //console.log(document.getElementById('c-file').files[0]);
+                if (f) 
+                {
+                    var r = new FileReader();
+                    r.onload = function(e) { 
+	                    var contents = e.target.result;
+                        alert("name: " + f.name + "\n"
+                            +"type: " + f.type + "\n"
+                            +"size: " + f.size + " bytes\n"
+                            +contents.substr()
+                        );
+                        var textCode = contents.substr();
+                        sendCode(textCode);//funcao do websocket
+                    }
+                    r.readAsText(f);
+                } 
+                else 
+                { 
+                    alert("Failed to load file");
+                }
+            }
+          
+            //Verifica a extenssao do arquivo
+            function checkExtC()
+            {
+                if(document.getElementById("c-file").value.lastIndexOf(".c")==-1)     
+                {
+                    alert("Fovor inserir um arquivo .c");
+                    return false;
+                }
+            }
+        </script>
+        
+        <script language="javascript" type="text/javascript">
+
+            var wsFile = "ws://187.106.135.139:9001/wsFile";
+            var output;
+ 
+            function inicializaServerFile()
+            {
+                output = document.getElementById("output");
+                criaConexao();
+            }
+
+            function criaConexao()
+            {
+                websocket = new WebSocket(wsFile);
+                websocket.onopen = function(evt) { onOpen(evt) };
+                websocket.onclose = function(evt) { onClose(evt) };
+                websocket.onmessage = function(evt) { onMessage(evt) };
+                websocket.onerror = function(evt) { onError(evt) };
+            }
+
+            function onOpen(evt)
+            {                
+                //Altera status do servidor
+                document.getElementById('statusServer').style = "color: blue;";
+                document.getElementById('statusServer').innerHTML = "Online";
+            }
+            
+            function onClose(evt)
+            {
+                //Altera status do servidor
+                document.getElementById('statusServer').style = "color: red;";
+                document.getElementById('statusServer').innerHTML = "Offline";
+            }
+          
+            function sendCode(code)
+            {
+                doSend(code);
+            }
+            
+            //Recebe informacoes do servidor
+            function onMessage(evt)
+            {
+                alert(evt.data);
+                document.getElementById('error').innerHTML = evt.data; 
+            }
+
+            //Caso algum evento (evt) falhar
+            function onError(evt)
+            {
+                console.log(websocket);
+            }
+
+            function doSend(message)
+            {
+                //Altera conteudo do menu de codigos
+                document.getElementById('code').innerHTML = message; 
+                hljs.highlightBlock(document.getElementById('code'));//atualiza o highlight
+                //Envia o codigo para o servidor
+                websocket.send(message);
+            }
+
+            window.addEventListener("load", inicializaServerFile, false);
+
+        </script>
+        
+        <!--<script language="javascript" type="text/javascript">
+
+            var wsChat = "ws://187.106.135.139:9002/wsChat";
+            var output;
+
+                       
+            function init()
+            {
+                output = document.getElementById("output");
+                testWebSocket();
+            }
+
+            function testWebSocket()
+            {
+                websocket = new WebSocket(wsChat);
+                websocket.onopen = function(evt) { onOpen(evt) };
+                websocket.onclose = function(evt) { onClose(evt) };
+                websocket.onmessage = function(evt) { onMessage(evt) };
+                websocket.onerror = function(evt) { onError(evt) };
+            }
+
+            function onOpen(evt)
+            {
+                writeToScreen("CONNECTED");
+            }
+          
+            function enviaChat()
+            {
+                var message = document.getElementById("inputChat").value;
+                doSend(message);
+            }
+            
+            function sendCode(code)
+            {
+                doSend(code);
+            }
+            
+            function termina()
+            {
+                websocket.close();
+            }
+
+            function onClose(evt)
+            {
+                writeToScreen("DISCONNECTED");
+            }
+
+            function onMessage(evt)
+            {
+                writeToScreen('<span style="color: blue;">RESPONSE: ' + evt.data+'</span>');
+                //websocket.close();
+            }
+
+            function onError(evt)
+            {
+                console.log(websocket);
+                writeToScreen('<span style="color: red;">ERROR:</span> ' + evt.data);
+            }
+
+            function doSend(message)
+            {
+                writeToScreen("SENT: " + message); 
+                websocket.send(message);
+            }
+
+            function writeToScreen(message)
+            {
+                var pre = document.createElement("p");
+                pre.style.wordWrap = "break-word";
+                pre.innerHTML = message;
+                output.appendChild(pre);
+            }
+
+
+            window.addEventListener("load", init, false);
+
+        </script>-->
+        
+        <!--<h2>Server Test</h2>
+        <div id="output"></div>-->
+    </body>
+</html>
+

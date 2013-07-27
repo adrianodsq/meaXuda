@@ -1,0 +1,19 @@
+#menuFile
+{
+    position: absolute;
+    bottom: 20px;
+	width: 100%;
+	text-align: center;
+}
+
+#informacao
+{
+    position: absolute;
+    right: 0px;
+    
+}
+
+h2,h3
+{
+    text-align: center;
+}
