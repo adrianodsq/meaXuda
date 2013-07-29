@@ -1,0 +1,56 @@
+<html>
+    <head>
+    </head>
+
+    <body>
+    
+    Nome: <input id="nome" type="text" />
+    <button onclick="javascript: enviaNome();">Criar Sessao</button>
+    <button id="buttonSessao" onclick="javascript: procurarSessao();">Procurar Sessao</button></br>
+    <div id="menuSessao">
+    Nome Sessao:
+    <input id="nomeSessao" type="text" />
+    <button id="buttonSessao" onclick="javascript: entrarSessao();">Entrar Sessao</button>
+    </div> 
+    
+    <script language="javascript" type="text/javascript">
+        init();
+        
+        function init()
+        {
+            document.getElementById('menuSessao').style.visibility='hidden'   
+        }
+        
+        function enviaNome()
+        {
+            window.location.assign("MeaXuda.html?N"+creatKey(document.getElementById("nome").value));
+             
+        }
+        
+        function creatKey (name)
+        {
+            var key = '';
+            for(var i=0 ; i < name.length ; i++) 
+            {
+                key += ''+name.charCodeAt(i).toString(16);
+            }
+            console.log(key);
+            return key;
+        }
+        
+        function procurarSessao ()
+        {
+            document.getElementById('menuSessao').style.visibility = 'visible';
+            
+        }
+        
+        function entrarSessao (){
+            var sKey = document.getElementById("nomeSessao").value;
+            var uKey = creatKey(document.getElementById("nome").value); 
+            window.location.assign("MeaXuda.html?S"+sKey+"U"+uKey);
+        }
+    
+    </script>
+    </body>
+    
+</html>

@@ -1,23 +1,21 @@
 <html>
     <head>
-        <title>Me aXuda - V3.1.2</title><!--V[n semana].[dia].[n iteracao do dia]-->
-        <link rel="stylesheet" type="text/css" href="style/style.css" />
-        <link rel="stylesheet" href="highlight/styles/default.css">
+        <title>Me aXuda - V2.7.2</title><!--V[n semana].[dia].[n iteracao do dia]-->
+        <link rel="stylesheet" type="text/css" href="sd/style/style.css" />
+        <link rel="stylesheet" href="sd/highlight/styles/default.css">
     </head>
     <body>
-        <script src="highlight/highlight.pack.js"></script> 
+        <script src="sd/highlight/highlight.pack.js"></script> 
         <script>hljs.initHighlightingOnLoad();</script>
        
         <!--Menu informacoes do status do servidor-->
         <div id="informacao">
             <span id="statusServerFile">Offline</span></br>
-            <span id="statusServerChat">Offline</span></br>
-            <span id="sKey"></span>
+            <span id="statusServerChat">Offline</span>
         </div>
         
         <h2><span style="color: red">M</span>e a<span style="color: red">X</span>uda</h2>
         <h3>Servidor teste para o projeto de Sistemas Distribu&iacutedos</h3>
-        <h3><a href="ftp://187.106.135.139:2121/" target="_blank">Arquivos!</a></h3> 
         
         <!--Area do menu de arquivos-->
         <div id="fileArea">
@@ -41,37 +39,6 @@
             </div>
         </div>
             
-        <script language="javascript" type="text/javascript">
-            var connectType = null// window.location.search[1];
-            var sessionPKey = null;//window.location.search.substr(2);
-            var userName = null;//defName(sessionPKey);
-            defineVars();
-            
-            function defineVars ()
-            {
-                connectType = window.location.search[1];
-                if (connectType == 'N')
-                {
-                    sessionPKey = window.location.search.substr(2);
-                    userName = defName(sessionPKey);
-                }
-                if (connectType == 'S')
-                {
-                    temp = window.location.search.indexOf("U");
-                    sessionPKey = window.location.search.substr(2,temp-2);
-                    userName = defName(window.location.search.substr(temp+1));
-                }
-            }
-
-            function defName(pKey) 
-            {
-                var str = '';
-                for (var i = 0; i < pKey.length; i += 2)
-                    str += String.fromCharCode(parseInt(pKey.substr(i, 2), 16));
-                return str;
-            }
-        </script>
-        
         
         <script type="text/javascript">
             //Converte o conteudo do arquivo em string
@@ -91,12 +58,8 @@
                             +"size: " + f.size + " bytes\n"
                             +contents.substr()
                         );
-                        var fileNameNoExt = f.name.substr(0,f.name.indexOf("."));
-                        var fileName = f.name; 
-                        var fileCode = contents.substr();
-                        //var infoFile = JSON.stringify([fileNameNoExt,fileName,fileCode]);
-                        //console.log(infoFile);
-                        sendCode(fileNameNoExt, fileName, fileCode);//funcao do websocket
+                        var textCode = contents.substr();
+                        sendCode(textCode);//funcao do websocket
                     }
                     r.readAsText(f);
                 } 
@@ -124,6 +87,7 @@
 		        {
 		            case 13: 
 		                document.getElementById("sendChat").click();
+		                document.getElementById("inputChat").value = "";
 		                break;
 		            
 		        }
@@ -135,7 +99,6 @@
 
             var wsFile = "ws://187.106.135.139:9001/wsFile";
             var output;
-            var sessionKey;
  
             function inicializaServerFile()
             {
@@ -156,10 +119,6 @@
                 //Altera status do servidor
                 document.getElementById('statusServerFile').style = "color: green;";
                 document.getElementById('statusServerFile').innerHTML = "Online";
-                //sessionKey = creatKey(userName);
-                sessionKey = sessionPKey;
-                var tes = JSON.stringify([connectType,sessionKey]);
-                doSendSFile(tes);
             }
             
             function onCloseSFile(evt)
@@ -169,15 +128,9 @@
                 document.getElementById('statusServerFile').innerHTML = "Offline";
             }
           
-            function sendCode(fileNameNoExt , fileName, fileCode)
+            function sendCode(code)
             {
-                //Altera conteudo do menu de codigos
-                document.getElementById('code').innerHTML = fileCode; 
-                hljs.highlightBlock(document.getElementById('code'));//atualiza o highlight
-                //var codeInf = JSON.stringify(["C",code]);
-                var infoCode = JSON.stringify([fileNameNoExt,fileName,fileCode,sessionKey]);
-                //console.log(infoCode);
-                doSendSFile(infoCode);
+                doSendSFile(code);
             }
             
             //Recebe informacoes do servidor
@@ -186,42 +139,12 @@
                 //alert(evt.data);
                 var resp = JSON.parse(evt.data);
                 console.log(resp);
-                if (resp[0] == 'NS')
-                {
-                    if(resp[1] == '0')
-                    {
-                        console.log("dir criado");
-                        document.getElementById("sKey").innerHTML = "Key: "+sessionKey;   
-            
-                    }
-                    else
-                    {
-                        console.log("error dir");
-                        alert("Ja existe um Sessao com esse Nome! Favor mudar.");
-                        window.location.assign("index.html");
-                    }
-                }
-                if (resp[0] == 'SS')
-                {
-                    if(resp[1] == '1')
-                        console.log("dir encontrado");
-                    else
-                    {
-                        console.log("error procura");
-                        alert("Nao foi encontrada a Sessao!");
-                        window.location.assign("index.html");
-                    }
-                }
-                
                 if (resp[0]=='E')
                     document.getElementById('error').innerHTML = resp[1];
-                
-                if (resp[0] == 'C')
-                {
-                    console.log("AQUI");
+                else{
                     document.getElementById('code').innerHTML = resp[1]; 
                     hljs.highlightBlock(document.getElementById('code'));//atualiza o highlight
-                } 
+                    } 
             }
 
             //Caso algum evento (evt) falhar
@@ -229,22 +152,14 @@
             {
                 console.log(websocketSFile);
             }
-           
+
             function doSendSFile(message)
             {
+                //Altera conteudo do menu de codigos
+                document.getElementById('code').innerHTML = message; 
+                hljs.highlightBlock(document.getElementById('code'));//atualiza o highlight
                 //Envia o codigo para o servidor
                 websocketSFile.send(message);
-            }
-            
-            function creatKey (name)
-            {
-                var key = '';
-                for(var i=0 ; i < name.length ; i++) 
-                {
-                    key += ''+name.charCodeAt(i).toString(16);
-                }
-                console.log(key);
-                return key;
             }
 
             window.addEventListener("load", inicializaServerFile, false);
@@ -255,7 +170,7 @@
 
             var wsChat = "ws://187.106.135.139:9001/wsChat";
             var output;
-            var userName
+
                        
             function inicializaServerChat()
             {
@@ -289,16 +204,13 @@
             function enviaChat()
             {
                 var message = document.getElementById("inputChat").value;
-                document.getElementById("inputChat").value = "";
-                writeToScreen("Eu: " + message); 
+                
                 doSendSChat(message);
             }
                      
             function onMessageSChat(evt)
             {
-                var userResp = JSON.parse(evt.data);
-                console.log(userResp);
-                writeToScreen('<span style="color: blue;">'+userResp[1]+': '+ userResp[2]+'</span>');
+                writeToScreen('<span style="color: blue;">-->' + evt.data+'</span>');
                 //websocket.close();
             }
 
@@ -309,8 +221,8 @@
 
             function doSendSChat(message)
             {
-                var userMsg = JSON.stringify([connectType,sessionKey,userName,message]);
-                websocketSChat.send(userMsg);
+                writeToScreen("-->" + message); 
+                websocketSChat.send(message);
             }
 
             function writeToScreen(message)
