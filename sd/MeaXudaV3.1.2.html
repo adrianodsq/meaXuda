@@ -1,0 +1,333 @@
+<html>
+    <head>
+        <title>Me aXuda - V3.1.2</title><!--V[n semana].[dia].[n iteracao do dia]-->
+        <link rel="stylesheet" type="text/css" href="style/style.css" />
+        <link rel="stylesheet" href="highlight/styles/default.css">
+    </head>
+    <body>
+        <script src="highlight/highlight.pack.js"></script> 
+        <script>hljs.initHighlightingOnLoad();</script>
+       
+        <!--Menu informacoes do status do servidor-->
+        <div id="informacao">
+            <span id="statusServerFile">Offline</span></br>
+            <span id="statusServerChat">Offline</span></br>
+            <span id="sKey"></span>
+        </div>
+        
+        <h2><span style="color: red">M</span>e a<span style="color: red">X</span>uda</h2>
+        <h3>Servidor teste para o projeto de Sistemas Distribu&iacutedos</h3>
+        <h3><a href="ftp://187.106.135.139:2121/" target="_blank">Arquivos!</a></h3> 
+        
+        <!--Area do menu de arquivos-->
+        <div id="fileArea">
+            <div class="boxFile" id="menuFile">
+                <input id="c-file" type="file" onchange="javascript: checkExtC();"/></br>
+                <button onclick="javascript: readSingleFile();">Enviar Arquivo</button></br>
+            </div>
+        
+            <!--Area de codigo-->
+            <div class="boxFile" id = "codeArea">    
+                <pre>C&oacutedigo:<code id = "code"></code></pre>
+                <pre>Erros:<code id = "error"></code></pre>
+            </div>
+        </div>
+        
+        <div id="chatArea">
+            <div class="boxChat" id="output"></div>
+            <div class="boxChat" id="textChat">
+                <textarea id="inputChat" rows="4" cols="50" onkeypress="return onDocumentKeyDown(event);"></textarea>
+                <button id="sendChat" onclick="javascript: enviaChat();">Enviar</button>
+            </div>
+        </div>
+            
+        <script language="javascript" type="text/javascript">
+            var connectType = null// window.location.search[1];
+            var sessionPKey = null;//window.location.search.substr(2);
+            var userName = null;//defName(sessionPKey);
+            defineVars();
+            
+            function defineVars ()
+            {
+                connectType = window.location.search[1];
+                if (connectType == 'N')
+                {
+                    sessionPKey = window.location.search.substr(2);
+                    userName = defName(sessionPKey);
+                }
+                if (connectType == 'S')
+                {
+                    temp = window.location.search.indexOf("U");
+                    sessionPKey = window.location.search.substr(2,temp-2);
+                    userName = defName(window.location.search.substr(temp+1));
+                }
+            }
+
+            function defName(pKey) 
+            {
+                var str = '';
+                for (var i = 0; i < pKey.length; i += 2)
+                    str += String.fromCharCode(parseInt(pKey.substr(i, 2), 16));
+                return str;
+            }
+        </script>
+        
+        
+        <script type="text/javascript">
+            //Converte o conteudo do arquivo em string
+            function readSingleFile()
+            {
+                //Retrieve the first (and only!) File from the FileList object
+                var f = document.getElementById('c-file').files[0];
+             
+                //console.log(document.getElementById('c-file').files[0]);
+                if (f) 
+                {
+                    var r = new FileReader();
+                    r.onload = function(e) { 
+	                    var contents = e.target.result;
+                        alert("name: " + f.name + "\n"
+                            +"type: " + f.type + "\n"
+                            +"size: " + f.size + " bytes\n"
+                            +contents.substr()
+                        );
+                        var fileNameNoExt = f.name.substr(0,f.name.indexOf("."));
+                        var fileName = f.name; 
+                        var fileCode = contents.substr();
+                        //var infoFile = JSON.stringify([fileNameNoExt,fileName,fileCode]);
+                        //console.log(infoFile);
+                        sendCode(fileNameNoExt, fileName, fileCode);//funcao do websocket
+                    }
+                    r.readAsText(f);
+                } 
+                else 
+                { 
+                    alert("Failed to load file");
+                }
+            }
+          
+            //Verifica a extenssao do arquivo
+            function checkExtC()
+            {
+                if(document.getElementById("c-file").value.lastIndexOf(".c")==-1)     
+                {
+                    alert("Fovor inserir um arquivo .c");
+                    return false;
+                }
+            }
+        </script>
+        
+        <script language="javascript" type="text/javascript">
+            function onDocumentKeyDown ( event )
+		    {
+		        switch ( event.keyCode )
+		        {
+		            case 13: 
+		                document.getElementById("sendChat").click();
+		                break;
+		            
+		        }
+		        //console.log(document.getElementById("inputChat").style.cursor());
+		    }          
+        </script>
+        
+        <script language="javascript" type="text/javascript">
+
+            var wsFile = "ws://187.106.135.139:9001/wsFile";
+            var output;
+            var sessionKey;
+ 
+            function inicializaServerFile()
+            {
+                criaConexaoSFile();
+            }
+
+            function criaConexaoSFile()
+            {
+                websocketSFile = new WebSocket(wsFile);
+                websocketSFile.onopen = function(evt) { onOpenSFile(evt) };
+                websocketSFile.onclose = function(evt) { onCloseSFile(evt) };
+                websocketSFile.onmessage = function(evt) { onMessageSFile(evt) };
+                websocketSFile.onerror = function(evt) { onErrorSFile(evt) };
+            }
+
+            function onOpenSFile(evt)
+            {                
+                //Altera status do servidor
+                document.getElementById('statusServerFile').style = "color: green;";
+                document.getElementById('statusServerFile').innerHTML = "Online";
+                //sessionKey = creatKey(userName);
+                sessionKey = sessionPKey;
+                var tes = JSON.stringify([connectType,sessionKey]);
+                doSendSFile(tes);
+            }
+            
+            function onCloseSFile(evt)
+            {
+                //Altera status do servidor
+                document.getElementById('statusServerFile').style = "color: red;";
+                document.getElementById('statusServerFile').innerHTML = "Offline";
+            }
+          
+            function sendCode(fileNameNoExt , fileName, fileCode)
+            {
+                //Altera conteudo do menu de codigos
+                document.getElementById('code').innerHTML = fileCode; 
+                hljs.highlightBlock(document.getElementById('code'));//atualiza o highlight
+                //var codeInf = JSON.stringify(["C",code]);
+                var infoCode = JSON.stringify([fileNameNoExt,fileName,fileCode,sessionKey]);
+                //console.log(infoCode);
+                doSendSFile(infoCode);
+            }
+            
+            //Recebe informacoes do servidor
+            function onMessageSFile(evt)
+            {
+                //alert(evt.data);
+                var resp = JSON.parse(evt.data);
+                console.log(resp);
+                if (resp[0] == 'NS')
+                {
+                    if(resp[1] == '0')
+                    {
+                        console.log("dir criado");
+                        document.getElementById("sKey").innerHTML = "Key: "+sessionKey;   
+            
+                    }
+                    else
+                    {
+                        console.log("error dir");
+                        alert("Ja existe um Sessao com esse Nome! Favor mudar.");
+                        window.location.assign("index.html");
+                    }
+                }
+                if (resp[0] == 'SS')
+                {
+                    if(resp[1] == '1')
+                        console.log("dir encontrado");
+                    else
+                    {
+                        console.log("error procura");
+                        alert("Nao foi encontrada a Sessao!");
+                        window.location.assign("index.html");
+                    }
+                }
+                
+                if (resp[0]=='E')
+                    document.getElementById('error').innerHTML = resp[1];
+                
+                if (resp[0] == 'C')
+                {
+                    console.log("AQUI");
+                    document.getElementById('code').innerHTML = resp[1]; 
+                    hljs.highlightBlock(document.getElementById('code'));//atualiza o highlight
+                } 
+            }
+
+            //Caso algum evento (evt) falhar
+            function onErrorSFile(evt)
+            {
+                console.log(websocketSFile);
+            }
+           
+            function doSendSFile(message)
+            {
+                //Envia o codigo para o servidor
+                websocketSFile.send(message);
+            }
+            
+            function creatKey (name)
+            {
+                var key = '';
+                for(var i=0 ; i < name.length ; i++) 
+                {
+                    key += ''+name.charCodeAt(i).toString(16);
+                }
+                console.log(key);
+                return key;
+            }
+
+            window.addEventListener("load", inicializaServerFile, false);
+
+        </script>
+        
+        <script language="javascript" type="text/javascript">
+
+            var wsChat = "ws://187.106.135.139:9001/wsChat";
+            var output;
+            var userName
+                       
+            function inicializaServerChat()
+            {
+                output = document.getElementById("output");
+                criaConexaoSChat();
+            }
+
+            function criaConexaoSChat()
+            {
+                websocketSChat = new WebSocket(wsChat);
+                websocketSChat.onopen = function(evt) { onOpenSChat(evt) };
+                websocketSChat.onclose = function(evt) { onCloseSChat(evt) };
+                websocketSChat.onmessage = function(evt) { onMessageSChat(evt) };
+                websocketSChat.onerror = function(evt) { onErrorSChat(evt) };
+            }
+
+           function onOpenSChat(evt)
+            {                
+                //Altera status do servidor
+                document.getElementById('statusServerChat').style = "color: green;";
+                document.getElementById('statusServerChat').innerHTML = "Online";
+            }
+            
+            function onCloseSChat(evt)
+            {
+                //Altera status do servidor
+                document.getElementById('statusServerChat').style = "color: red;";
+                document.getElementById('statusServerChat').innerHTML = "Offline";
+            }
+          
+            function enviaChat()
+            {
+                var message = document.getElementById("inputChat").value;
+                document.getElementById("inputChat").value = "";
+                writeToScreen("Eu: " + message); 
+                doSendSChat(message);
+            }
+                     
+            function onMessageSChat(evt)
+            {
+                var userResp = JSON.parse(evt.data);
+                console.log(userResp);
+                writeToScreen('<span style="color: blue;">'+userResp[1]+': '+ userResp[2]+'</span>');
+                //websocket.close();
+            }
+
+            function onErrorSChat(evt)
+            {
+                console.log(websocketSChat);
+            }
+
+            function doSendSChat(message)
+            {
+                var userMsg = JSON.stringify([connectType,sessionKey,userName,message]);
+                websocketSChat.send(userMsg);
+            }
+
+            function writeToScreen(message)
+            {
+                var pre = document.createElement("p");
+                pre.style.wordWrap = "break-word";
+                pre.innerHTML = message;
+                output.appendChild(pre);
+            }
+
+
+            window.addEventListener("load", inicializaServerChat, false);
+
+        </script>
+        
+        <!--<h2>Server Test</h2>-->
+        
+    </body>
+</html>
+
