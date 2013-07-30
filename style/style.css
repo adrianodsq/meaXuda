@@ -1,0 +1,44 @@
+/*V3.3.1*/
+#fileArea
+{
+    position: absolute;
+    width: 40%;
+	left: 0px;
+	/*border-style:solid;
+    border-width:1px;*/
+}
+
+#informacao
+{
+    position: absolute;
+    right: 0px;
+    /*border-style:solid;
+    border-width:1px;*/
+}
+
+#chatArea
+{
+    position: absolute;
+    right: 0px;
+    /*width: 30%;
+    */bottom: 20px;
+    /*border-style:solid;
+    border-width:1px;*/
+}
+
+#downArea
+{
+    position: absolute;
+    width: 30%;
+	left: 50%;
+	right: 40%;
+	text-align:left;
+    /*border-style:solid;
+    border-width:1px;*/
+}
+
+
+h2,h3
+{
+    text-align: center;
+}
