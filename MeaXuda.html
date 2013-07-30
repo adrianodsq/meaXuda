@@ -1,8 +1,8 @@
 <html>
     <head>
-        <title>Me aXuda - V3.1.2</title><!--V[n semana].[dia].[n iteracao do dia]-->
+        <title>Me aXuda - V3.3.1</title><!--V[n semana].[dia].[n iteracao do dia]-->
         <link rel="stylesheet" type="text/css" href="style/style.css" />
-        <link rel="stylesheet" href="highlight/styles/default.css">
+        <link rel="stylesheet" href="highlight/styles/googlecode.css">
     </head>
     <body>
         <script src="highlight/highlight.pack.js"></script> 
@@ -17,9 +17,8 @@
         
         <h2><span style="color: red">M</span>e a<span style="color: red">X</span>uda</h2>
         <h3>Servidor teste para o projeto de Sistemas Distribu&iacutedos</h3>
-        <h3><a href="ftp://187.106.135.139:2121/" target="_blank">Arquivos!</a></h3> 
-        
-        <!--Area do menu de arquivos-->
+                
+        <!--Area do box de codigo-->
         <div id="fileArea">
             <div class="boxFile" id="menuFile">
                 <input id="c-file" type="file" onchange="javascript: checkExtC();"/></br>
@@ -31,6 +30,10 @@
                 <pre>C&oacutedigo:<code id = "code"></code></pre>
                 <pre>Erros:<code id = "error"></code></pre>
             </div>
+        </div>
+        
+        <div id="downArea">
+            <span id="links"><span> 
         </div>
         
         <div id="chatArea">
@@ -77,6 +80,8 @@
             //Converte o conteudo do arquivo em string
             function readSingleFile()
             {
+                document.getElementById("code").innerHTML = "";
+                document.getElementById("error").innerHTML = "";
                 //Retrieve the first (and only!) File from the FileList object
                 var f = document.getElementById('c-file').files[0];
              
@@ -114,6 +119,14 @@
                     alert("Fovor inserir um arquivo .c");
                     return false;
                 }
+            }
+            
+            function replaceCode(fileCode)
+            {
+                var cod = fileCode.replace(/</g,"&lt");
+                cod = cod.replace(/>/g,"&gt");
+                
+                return cod;
             }
         </script>
         
@@ -172,7 +185,7 @@
             function sendCode(fileNameNoExt , fileName, fileCode)
             {
                 //Altera conteudo do menu de codigos
-                document.getElementById('code').innerHTML = fileCode; 
+                document.getElementById('code').innerHTML = replaceCode(fileCode); 
                 hljs.highlightBlock(document.getElementById('code'));//atualiza o highlight
                 //var codeInf = JSON.stringify(["C",code]);
                 var infoCode = JSON.stringify([fileNameNoExt,fileName,fileCode,sessionKey]);
@@ -190,13 +203,13 @@
                 {
                     if(resp[1] == '0')
                     {
-                        console.log("dir criado");
+                        //console.log("dir criado");
                         document.getElementById("sKey").innerHTML = "Key: "+sessionKey;   
             
                     }
                     else
                     {
-                        console.log("error dir");
+                        //console.log("error dir");
                         alert("Ja existe um Sessao com esse Nome! Favor mudar.");
                         window.location.assign("index.html");
                     }
@@ -214,13 +227,21 @@
                 }
                 
                 if (resp[0]=='E')
+                {
                     document.getElementById('error').innerHTML = resp[1];
+                    addLink (resp[2]); 
+                }
                 
                 if (resp[0] == 'C')
                 {
                     console.log("AQUI");
                     document.getElementById('code').innerHTML = resp[1]; 
                     hljs.highlightBlock(document.getElementById('code'));//atualiza o highlight
+                }
+                
+                if (resp[0] == 'O')
+                {
+                    addLink (resp[1] , resp[2]);
                 } 
             }
 
@@ -246,6 +267,31 @@
                 console.log(key);
                 return key;
             }
+            
+            function addLink (arquivo, executavel)
+            {
+                
+                if (executavel)
+                {
+                    if (!document.getElementById(executavel))
+                    {
+                        var preLink = document.createElement("p");
+                        preLink.style.wordWrap = "break-word";
+                        var link = "<a id=\""+executavel+"\" href=\"ftp://187.106.135.139:2121/"+sessionKey+"/"+executavel+"\" target=\"_blank\">"+executavel+"</a>"
+                        preLink.innerHTML = link;
+                        document.getElementById("links").appendChild(preLink);    
+                    }
+                }
+                
+                if (!document.getElementById(arquivo))
+                {
+                    var preLink = document.createElement("p");
+                    preLink.style.wordWrap = "break-word";
+                    var link = "<a id=\""+arquivo+"\" href=\"ftp://187.106.135.139:2121/"+sessionKey+"/"+arquivo+"\" target=\"_blank\">"+arquivo+"</a>"
+                    preLink.innerHTML = link;
+                    document.getElementById("links").appendChild(preLink);    
+                }
+            }
 
             window.addEventListener("load", inicializaServerFile, false);
 
@@ -255,7 +301,7 @@
 
             var wsChat = "ws://187.106.135.139:9001/wsChat";
             var output;
-            var userName
+            var sessionKey;
                        
             function inicializaServerChat()
             {
@@ -277,6 +323,10 @@
                 //Altera status do servidor
                 document.getElementById('statusServerChat').style = "color: green;";
                 document.getElementById('statusServerChat').innerHTML = "Online";
+                
+                sessionKey = sessionPKey;
+                var tes = JSON.stringify([connectType,sessionKey]);
+                doSendSChat(tes);
             }
             
             function onCloseSChat(evt)
@@ -290,15 +340,16 @@
             {
                 var message = document.getElementById("inputChat").value;
                 document.getElementById("inputChat").value = "";
-                writeToScreen("Eu: " + message); 
-                doSendSChat(message);
+                writeToScreen("Eu: " + message);
+                var userMsg = JSON.stringify(['M',sessionKey,userName,message]);
+                doSendSChat(userMsg);
             }
                      
             function onMessageSChat(evt)
             {
                 var userResp = JSON.parse(evt.data);
                 console.log(userResp);
-                writeToScreen('<span style="color: blue;">'+userResp[1]+': '+ userResp[2]+'</span>');
+                writeToScreen('<span style="color: blue;">'+userResp[0]+': '+ userResp[1]+'</span>');
                 //websocket.close();
             }
 
@@ -307,10 +358,10 @@
                 console.log(websocketSChat);
             }
 
-            function doSendSChat(message)
+            function doSendSChat(msg)
             {
-                var userMsg = JSON.stringify([connectType,sessionKey,userName,message]);
-                websocketSChat.send(userMsg);
+                //var userMsg = JSON.stringify([connectType,sessionKey,userName,message]);
+                websocketSChat.send(msg);
             }
 
             function writeToScreen(message)
