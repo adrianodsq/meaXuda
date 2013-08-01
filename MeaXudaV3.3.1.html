@@ -1,6 +1,6 @@
 <html>
     <head>
-        <title>Me aXuda - V3.5.2</title><!--V[n semana].[dia].[n iteracao do dia]-->
+        <title>Me aXuda - V3.3.1</title><!--V[n semana].[dia].[n iteracao do dia]-->
         <link rel="stylesheet" type="text/css" href="style/style.css" />
         <link rel="stylesheet" href="highlight/styles/googlecode.css">
     </head>
@@ -37,10 +37,9 @@
         </div>
         
         <div id="chatArea">
-            Chat:
             <div class="boxChat" id="output"></div>
             <div class="boxChat" id="textChat">
-                <textarea id="inputChat"></textarea></br>
+                <textarea id="inputChat" rows="4" cols="50" onkeypress="return onDocumentKeyDown(event);"></textarea>
                 <button id="sendChat" onclick="javascript: enviaChat();">Enviar</button>
             </div>
         </div>
@@ -50,7 +49,6 @@
             var sessionPKey = null;//window.location.search.substr(2);
             var userName = null;//defName(sessionPKey);
             defineVars();
-            defVisibility();
             
             function defineVars ()
             {
@@ -75,12 +73,6 @@
                     str += String.fromCharCode(parseInt(pKey.substr(i, 2), 16));
                 return str;
             }
-            
-            function defVisibility()
-            {
-                document.getElementById("sKey").style.visibility = "hidden";
-                document.getElementById("menuFile").style.visibility = "hidden";
-            }
         </script>
         
         
@@ -99,11 +91,11 @@
                     var r = new FileReader();
                     r.onload = function(e) { 
 	                    var contents = e.target.result;
-                        /*alert("name: " + f.name + "\n"
+                        alert("name: " + f.name + "\n"
                             +"type: " + f.type + "\n"
                             +"size: " + f.size + " bytes\n"
                             +contents.substr()
-                        );*/
+                        );
                         var fileNameNoExt = f.name.substr(0,f.name.indexOf("."));
                         var fileName = f.name; 
                         var fileCode = contents.substr();
@@ -139,54 +131,17 @@
         </script>
         
         <script language="javascript" type="text/javascript">
-            var shiftDown = false;
-            var enterDown = false;
-            
-            initChat()
-            
-            function initChat()
-            {
-                 console.log("OI");
-                
-                document.getElementById("inputChat").addEventListener("keydown" , onDocumentKeyDown, false);
-                document.getElementById("inputChat").addEventListener("keyup" , onDocumentKeyUp, false);
-            }
-                        
-            function onDocumentKeyDown(event)
-            {
+            function onDocumentKeyDown ( event )
+		    {
 		        switch ( event.keyCode )
 		        {
-		            case 16: shiftDown = true;
-		                     break;
+		            case 13: 
+		                document.getElementById("sendChat").click();
+		                break;
 		            
-		            case 13: enterDown = true;
-		                     if (shiftDown == false)
-		                        enviaChat();
-		                     else
-		                        document.getElementById("inputChat").value += "";
-		                     break;
-		        
 		        }
-		        
-		    }
-		    
-		    function onDocumentKeyUp(event)
-            {
-		        switch ( event.keyCode )
-		        {
-		            case 16: shiftDown = false;
-		                     break;
-		            
-		            case 13: enterDown = false;
-		                     if(shiftDown == false)
-		                     {
-		                        document.getElementById("inputChat").value = "";
-		                        document.getElementById("output").scrollTop = document.getElementById("output").scrollHeight;
-		                     }
-		                     break;
-		        }
-		    }
-	          
+		        //console.log(document.getElementById("inputChat").style.cursor());
+		    }          
         </script>
         
         <script language="javascript" type="text/javascript">
@@ -194,13 +149,9 @@
             var wsFile = "ws://187.106.135.139:9001/wsFile";
             var output;
             var sessionKey;
-            var tryConnectF = 0;
-            var conexaoSFile = false;
-            var bufferCode = null;
  
             function inicializaServerFile()
             {
-                console.log(wsFile);
                 criaConexaoSFile();
             }
 
@@ -218,17 +169,10 @@
                 //Altera status do servidor
                 document.getElementById('statusServerFile').style = "color: green;";
                 document.getElementById('statusServerFile').innerHTML = "Online";
-                tryConnectF = 0;
-                conexaoSFile = true;
                 //sessionKey = creatKey(userName);
                 sessionKey = sessionPKey;
-                document.getElementById("sKey").innerHTML = "Key: "+sessionKey;
                 var tes = JSON.stringify([connectType,sessionKey]);
                 doSendSFile(tes);
-                
-                if (bufferCode != null)
-                    readSingleFile();
-                    
             }
             
             function onCloseSFile(evt)
@@ -236,27 +180,10 @@
                 //Altera status do servidor
                 document.getElementById('statusServerFile').style = "color: red;";
                 document.getElementById('statusServerFile').innerHTML = "Offline";
-                tryConnectF++;
-                conexaoSFile = false;
-                if (tryConnectF <= 4)
-                {
-                    if (websocketSFile.url == "ws://187.106.135.139:9001/wsFile")
-                    {
-                        wsFile = "ws://187.106.135.139:9002/wsFile"
-                        inicializaServerFile();
-                    }
-                    else
-                    {
-                        wsFile = "ws://187.106.135.139:9001/wsFile"
-                        inicializaServerFile();
-                    }
-                    
-                }
             }
           
             function sendCode(fileNameNoExt , fileName, fileCode)
             {
-                bufferCode = fileCode;
                 //Altera conteudo do menu de codigos
                 document.getElementById('code').innerHTML = replaceCode(fileCode); 
                 hljs.highlightBlock(document.getElementById('code'));//atualiza o highlight
@@ -272,25 +199,26 @@
                 //alert(evt.data);
                 var resp = JSON.parse(evt.data);
                 console.log(resp);
-                
-                if (resp == 'MA')
-                {
-                    connectType = 'N';
-                    document.getElementById("sKey").style.visibility = "visible";
-                    document.getElementById("menuFile").style.visibility = "visible";
-                }
-                
                 if (resp[0] == 'NS')
                 {
-                    if(resp[1] != '0')
+                    if(resp[1] == '0')
                     {
+                        //console.log("dir criado");
+                        document.getElementById("sKey").innerHTML = "Key: "+sessionKey;   
+            
+                    }
+                    else
+                    {
+                        //console.log("error dir");
                         alert("Ja existe um Sessao com esse Nome! Favor mudar.");
                         window.location.assign("index.html");
                     }
                 }
                 if (resp[0] == 'SS')
                 {
-                    if(resp[1] != '1')
+                    if(resp[1] == '1')
+                        console.log("dir encontrado");
+                    else
                     {
                         console.log("error procura");
                         alert("Nao foi encontrada a Sessao!");
@@ -306,8 +234,8 @@
                 
                 if (resp[0] == 'C')
                 {
-                    var code = replaceCode(resp[1]);
-                    document.getElementById('code').innerHTML = code; 
+                    console.log("AQUI");
+                    document.getElementById('code').innerHTML = resp[1]; 
                     hljs.highlightBlock(document.getElementById('code'));//atualiza o highlight
                 }
                 
@@ -320,11 +248,7 @@
             //Caso algum evento (evt) falhar
             function onErrorSFile(evt)
             {
-                console.log("Error conexão 9001");
-                console.log(websocketSFile.url);
-                tryConnectF++;
-                conexaoSFile = false;
-                websocketSFile.close();
+                console.log(websocketSFile);
             }
            
             function doSendSFile(message)
@@ -347,41 +271,26 @@
             function addLink (arquivo, executavel)
             {
                 
-                var ip;
-                var server = getServer();
-                
-                if (server == 1)
-                    ip = "ftp://187.106.135.139:2121/"
-                else if (server == 2)
-                    ip = "ftp://187.106.135.139:2122/"
-                    
-                rmLinks();
-                
                 if (executavel)
                 {
                     if (!document.getElementById(executavel))
                     {
                         var preLink = document.createElement("p");
                         preLink.style.wordWrap = "break-word";
-                        var link = "<a id=\""+executavel+"\" href=\""+ip+""+sessionKey+"/"+executavel+"\" target=\"_blank\">"+executavel+"</a>"
+                        var link = "<a id=\""+executavel+"\" href=\"ftp://187.106.135.139:2121/"+sessionKey+"/"+executavel+"\" target=\"_blank\">"+executavel+"</a>"
                         preLink.innerHTML = link;
                         document.getElementById("links").appendChild(preLink);    
                     }
                 }
-                               
+                
                 if (!document.getElementById(arquivo))
                 {
                     var preLink = document.createElement("p");
                     preLink.style.wordWrap = "break-word";
-                    var link = "<a id=\""+arquivo+"\" href=\""+ip+""+sessionKey+"/"+arquivo+"\" target=\"_blank\">"+arquivo+"</a>"
+                    var link = "<a id=\""+arquivo+"\" href=\"ftp://187.106.135.139:2121/"+sessionKey+"/"+arquivo+"\" target=\"_blank\">"+arquivo+"</a>"
                     preLink.innerHTML = link;
                     document.getElementById("links").appendChild(preLink);    
                 }
-            }
-            
-            function rmLinks ()
-            {
-                document.getElementById("links").innerHTML = "";   
             }
 
             window.addEventListener("load", inicializaServerFile, false);
@@ -393,14 +302,11 @@
             var wsChat = "ws://187.106.135.139:9001/wsChat";
             var output;
             var sessionKey;
-            var tryConnectC = 0;
-            var server = 1;
                        
             function inicializaServerChat()
             {
                 output = document.getElementById("output");
-                if (conexaoSFile = true)
-                    criaConexaoSChat();
+                criaConexaoSChat();
             }
 
             function criaConexaoSChat()
@@ -417,7 +323,6 @@
                 //Altera status do servidor
                 document.getElementById('statusServerChat').style = "color: green;";
                 document.getElementById('statusServerChat').innerHTML = "Online";
-                tryConnectC = 0;
                 
                 sessionKey = sessionPKey;
                 var tes = JSON.stringify([connectType,sessionKey]);
@@ -429,69 +334,28 @@
                 //Altera status do servidor
                 document.getElementById('statusServerChat').style = "color: red;";
                 document.getElementById('statusServerChat').innerHTML = "Offline";
-                tryConnectC++;
-                console.log(tryConnectC);
-                if (tryConnectC < 4)
-                {
-                    if (websocketSChat.url == "ws://187.106.135.139:9001/wsChat")
-                    {
-                        wsChat = "ws://187.106.135.139:9002/wsChat"
-                        server = 2;
-                        inicializaServerChat();
-                    }
-                    else
-                    {
-                        wsChat = "ws://187.106.135.139:9001/wsChat"
-                        server = 1;
-                        inicializaServerChat();
-                    }
-                    
-                }
             }
           
             function enviaChat()
             {
                 var message = document.getElementById("inputChat").value;
-                var verifica = message.replace(/\n/g,"");
-                verifica = verifica.replace(/ /g,"");
-                if (verifica.length != 0)
-                {
-                    message = message.replace(/\n/g,"</br>");
-                    writeToScreen("Eu: " + message);
-                    var userMsg = JSON.stringify(['M',sessionKey,userName,message]);
-                    doSendSChat(userMsg);
-                }
-                else
-                {
-                    var userMsg = JSON.stringify(["SPAN"]);
-                    doSendSChat(userMsg);    
-                }
+                document.getElementById("inputChat").value = "";
+                writeToScreen("Eu: " + message);
+                var userMsg = JSON.stringify(['M',sessionKey,userName,message]);
+                doSendSChat(userMsg);
             }
                      
             function onMessageSChat(evt)
             {
                 var userResp = JSON.parse(evt.data);
-                //console.log(userResp);
-                
-                if (userResp == "F")
-                    document.getElementById("inputChat").readOnly = true;
-                
-                else if (userResp == "NF")
-                    document.getElementById("inputChat").readOnly = false;
-                
-                else
-                {
-                    writeToScreen('<span style="color: blue;">'+userResp[0]+': '+ userResp[1]+'</span>');
-                    document.getElementById("output").scrollTop = document.getElementById("output").scrollHeight;        
-                }
+                console.log(userResp);
+                writeToScreen('<span style="color: blue;">'+userResp[0]+': '+ userResp[1]+'</span>');
                 //websocket.close();
             }
 
             function onErrorSChat(evt)
             {
-                tryConnectC++;
-                console.log(tryConnectC);
-                websocketSChat.close();
+                console.log(websocketSChat);
             }
 
             function doSendSChat(msg)
@@ -506,11 +370,6 @@
                 pre.style.wordWrap = "break-word";
                 pre.innerHTML = message;
                 output.appendChild(pre);
-            }
-            
-            function getServer()
-            {
-                return server;
             }
 
 
