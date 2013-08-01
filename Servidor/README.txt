@@ -1,0 +1,65 @@
+Iniciando Servidor de SD (MeaXuda)
+
+-Instalação Python:
+  #Instalar o python-dev e python-pip
+    $sudo apt-get install python-dev python-pip
+  
+  #Utilizando o python-pip, instalar as seguintes bibliotecas: 
+    ->bottle: $sudo pip install bottle
+    ->tornado: $sudo pip install tornado
+    ->websocket: $sudo pip install websocket
+    ->bottle-tornado-websocket: $sudo pip install bottle-tornado-websocket
+    
+    OBS: Pode ocorrer erro por falta de pacotes durante esse procedimento. Nesse caso, verifique o pacote necessário, instale e execute o comando novamente.
+  
+-Instalação do FTP:
+  #Instalar o proftpd
+    $sudo apt-get install proftpd
+    
+    OBS: Selecione o modo "standalone" quando for pedido na instalação
+  
+  #Na pasta /etc/proftpd/, substitua o arquivo proftpd.conf pelo arquivo que está no GitHub (/meaXuda/Servidor/FTP)
+  
+  #Configuração de usuário para o FTP:
+    &Adicione um usuário  com o nome ftp com o comando:
+      $sudo useradd -m ftp
+    
+    &Altere as permissões da pasta /home/ftp
+      $sudo chmod -R u=xwr /home/ftp/
+      $sudo chown -R <seu_usuário>:<seu_usuário> /home/ftp/
+    
+    &Dentro da pasta /home/ftp, crie a pasta sdFiles
+      $mkdir sdFiles
+  
+  #Reinicia o processo do servidor do FTP
+    $sudo /etc/init.d/proftpd restart
+  
+  #Acesse o endereço: ftp://<seu_ip_local> e verifique se a pasta de acesso está restrita apenas no diretório /home/ftp
+  
+  (Prosseguir apenas se a etapa anterior estiver correta!) 
+  
+  #Configuração do roteador
+    &Acesse o roteador e configure o Port Forward. Por exemplo:
+      <aplicacao> <port_from> <protocol> <ip_address> <port_to> <enable>
+      serverFTP      2121      TCP/UDP  <seu_ip_local>   21*      [x]
+    
+      *port_to tem que ser obrigatoriamente 21, visto que é porta padronizada para acesso FTP
+
+  #Acesse o endereço: ftp://<seu_ip_externo>:<port_from> e verifique se a pasta de acesso está restrita apenas no diretório /home/ftp
+
+-Configuração de ambiente para a execução do servidor python (serverSD.py)
+  #Coloque em uma mesma pasta os seguintes arquivos:
+    ->serverSD.py
+    ->compC.sh
+    ->criaDir.sh
+    ->verificaDir.sh
+  
+  #Configuração do roteador
+    &Acesse o roteador e configure o Port Forward. Por exemplo:
+      <aplicacao> <port_from> <protocol> <ip_address> <port_to> <enable>
+      serverSD       9002*     TCP/UDP  <seu_ip_local>  9002*     [x]
+      
+      *port_from e port_to tem que ser obrigatoriamente 9002, visto que o servidorSD.py está configurado dessa maneira.
+
+
+    
