@@ -41,10 +41,9 @@ Iniciando Servidor de SD (MeaXuda)
   #Configuração do roteador
     &Acesse o roteador e configure o Port Forward. Por exemplo:
       <aplicacao> <port_from> <protocol> <ip_address> <port_to> <enable>
-      serverFTP      2121**    TCP/UDP  <seu_ip_local>   21*      [x]
+      serverFTP      2121      TCP/UDP  <seu_ip_local>   21*      [x]
     
       *port_to tem que ser obrigatoriamente 21, visto que é porta padronizada para acesso FTP
-      **port_from não pode ser 21 (igual ao port_to), pois as empresas de internet bloqueiam essa porta de acesso externo!
 
   #Acesse o endereço: ftp://<seu_ip_externo>:<port_from> e verifique se a pasta de acesso está restrita apenas no diretório /home/ftp
 
